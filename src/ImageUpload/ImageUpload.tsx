@@ -1,21 +1,34 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, MutableRefObject, LegacyRef } from 'react'
 import { Box, Typography, Input, Button, FormControl, Card, styled, Link, FormLabel } from '@mui/material'
 
-const VisuallyHiddenInput = styled('input')({
-    clip: 'rect(0 0 0 0)',
-    clipPath: 'inset(50%)',
-    height: 1,
-    overflow: 'hidden',
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    whiteSpace: 'nowrap',
-    width: 1,
-  });
+// const VisuallyHiddenInput = styled('input')({
+//     // clip: 'rect(0 0 0 0)',
+//     // clipPath: 'inset(50%)',
+//     // height: 1,
+//     // overflow: 'hidden',
+//     // position: 'absolute',
+//     // bottom: 0,
+//     // left: 0,
+//     // whiteSpace: 'nowrap',
+//     // width: 1,
+//     // height: '100%',
+//     // width: '100%',
+//     // boxSizing: 'border-box'
+//     position:'absolute',
+//     // left: 50,
+//     // top: 80,
+//     width: '100%',
+//     height: '100%',
+//     border: '0.25px solid blue'
+
+//   });
 
 export default function ImageUpload(){
-    const [file, setFile] = useState<Blob | MediaSource | null>(null)
+    const fileInputRef = useRef<HTMLInputElement>(null)
+    const [file, setFile] = useState<Blob | MediaSource | File | null>(null)
     const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+    const [isDisabled, setIsDisabled] = useState<boolean>(true)
+    const [isDrag, setIsDrag] = useState<boolean>(false)
 
     const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         
@@ -24,20 +37,14 @@ export default function ImageUpload(){
         setFile(e.target.files[0])
     }
 
-    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-        // const files = e.dataTransfer.files
-
-        if (e.dataTransfer.files) {
-            handleOnChange(e as unknown as React.ChangeEvent<HTMLInputElement>)
+    const handleClick = () => {
+        // const files = e.currentTarget.files
+        if (fileInputRef.current) {
+            console.log('file input ref: ', fileInputRef)
+            fileInputRef?.current.click()
+            // handleOnChange(e)
         }
-        
-        return null
     }
-
-    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-        handleDrop(e)
-    }
-
    
     
     useEffect(() => {
@@ -52,64 +59,83 @@ export default function ImageUpload(){
           }
 
       }, [file])
+
+
+      const VisuallyHiddenInput = styled('input')({
+        width: '100%',
+        height: '100%',
+        border: '0.25px solid blue'
+    
+      });
+      
    
     return (
-        // <Box className="image-upload-container" sx={{border: '1px dashed', borderColor: '#D6D9DA', borderRadius: '8px', width: '314px', height: '144px'}}>
-        //     <Box className="upload-container">
-        //         <input className="input-file" type="file" onChange={handleOnChange} accept='.png, .jpg, .jpeg'/>
-        //         <Typography variant='h5'>Drag & Drop</Typography>
-        //         <Typography variant='h6'>or <span style={{color: '#0061EF'}}>Browse files</span></Typography>
-        //     </Box>
-            
-
-        //     {previewUrl && 
-        //         <img src={previewUrl} alt="Preview" style={{ width: '50%' }} />
-        //     }
-        // </Box>
-
-        // {/* <Button variant="contained" color="primary" component="label">
-        //             Browse Files
-        //             <VisuallyHiddenInput
-        //                 type="file" 
-        //             /> 
-        //         </Button> */}
-
-        <Card sx={{width:"50%"}} onDrag={(e) => handleDragOver(e)} onDrop={(e) => handleDrop(e)}>
+        <>
            {previewUrl ? 
                 (
+                <Card sx={{width:"50%"}}>
                     <Box>
                         <img src={previewUrl} alt="Preview" style={{width: '100%'}}/>
                         <Link 
                             underline='hover' 
                             sx={{'&:hover': {cursor: 'pointer'}}}
-                            onClick={() => setPreviewUrl(null)}
+                            onClick={() => {setPreviewUrl(null); setIsDisabled(true); setIsDrag(false); setFile(null)}}
                         >
                             <Typography variant='h6'>
                                 Replace Photo
                             </Typography>
                         </Link> 
                     </Box>
+                </Card>
                 )
                 : (
-                    <FormControl>
-                        <Typography variant='h5'>Drag & Drop</Typography>
-                        <Typography variant='h6'>
-                            or
-                        </Typography>
-                        <FormLabel sx={{color: '#0061EF'}}>
-                            <Link 
-                                underline='hover' 
-                                sx={{'&:hover': {cursor: 'pointer'}}}
-                            >
+                    <Card sx={{width:"300px", height: '300px', position: 'relative'}}>
+                        <FormControl
+                            sx={{border: '0.25px solid red', height: '80%', width: '80%'}}
+                            // onDragEnter={() => setIsDisabled(false)}
+                            onDragEnter={() => {setIsDrag(true); setIsDisabled(false)}}
+                            onDragOver={() => {setIsDrag(true); setIsDisabled(false)}}
+                            onDragLeave={() => {setIsDrag(false); setIsDisabled(true)}}
+                        >
+                            
+                            <VisuallyHiddenInput 
+                                type="file" 
+                                onFocus={() => setIsDisabled(false)} 
+                                // onBlur={() => {
+                                //     // Check if user clicked outside the dialog before disabling
+                                //     if (!document.activeElement?.matches('.MuiDialogContent [type="file"]')) {
+                                //       setIsDisabled(true);
+                                //     }}}
+                                onChange={handleOnChange} 
+                                disabled={isDisabled} 
+                                ref={fileInputRef}
+                            />
+                            <Box className='link-label-section' sx={{position: 'absolute', top: '20%', zIndex: isDrag ? -1 : 1}}>
+                                <Typography variant='h5'>Drag & Drop</Typography>
                                 <Typography variant='h6'>
-                                    Browse files
+                                    or
                                 </Typography>
-                            </Link>
-                            <VisuallyHiddenInput type="file" onChange={handleOnChange}/>
-                        </FormLabel>
-                    </FormControl>
+                                <FormLabel sx={{color: '#0061EF'}}>
+                                    <Link 
+                                        underline='hover' 
+                                        onClick={handleClick}
+                                        onMouseEnter={() => setIsDisabled(false)}
+                                        onMouseOver={() => setIsDisabled(false)}
+                                        // onMouseOut={() => setIsDisabled(true)}
+                                        // onMouseLeave={() => setIsDisabled(true)}
+                                        // onFocus={() => setIsDisabled(false)}
+                                        sx={{'&:hover': {cursor: 'pointer'}}}
+                                    >
+                                        <Typography variant='h6'>
+                                            Browse files
+                                        </Typography>
+                                    </Link>
+                                </FormLabel>
+                            </Box>
+                        </FormControl>
+                    </Card>
                 )}
-        </Card>
+        </>
         
   )
 }
