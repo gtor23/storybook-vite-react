@@ -15,10 +15,15 @@ export default function ImageUpload(){
     }
 
     const handleFileDrag = (e: React.DragEvent<HTMLDivElement>) => {
+        if (previewUrl) return
+
         e.preventDefault();
     }
 
     const handleFileDrop = (e: React.DragEvent<HTMLDivElement>) => {
+
+        if (previewUrl) return
+
         e.preventDefault();
 
         if (!e.dataTransfer.files) return
